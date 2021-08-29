@@ -1,19 +1,28 @@
 <idea-plugin>
-    <id>org.jetbrains.plugins.template</id>
-    <name>Template</name>
-    <vendor>JetBrains</vendor>
+    <id>org.udelledo.intellij.idea</id>
+    <name>PluginExperiment</name>
+    <vendor>udelledo</vendor>
 
     <!-- Product and plugin compatibility requirements -->
     <!-- https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
     <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.vcs</depends>
+    <depends>org.jetbrains.plugins.terminal</depends>
 
     <extensions defaultExtensionNs="com.intellij">
         <applicationService serviceImplementation="org.jetbrains.plugins.template.services.MyApplicationService"/>
         <projectService serviceImplementation="org.jetbrains.plugins.template.services.MyProjectService"/>
+        <projectService serviceImplementation="org.udelledo.intellij.idea.service.TerminalService"/>
     </extensions>
 
     <applicationListeners>
         <listener class="org.jetbrains.plugins.template.listeners.MyProjectManagerListener"
                   topic="com.intellij.openapi.project.ProjectManagerListener"/>
     </applicationListeners>
+    <actions>
+        <action id="org.udelledo.intellij.idea.action.TerminalAction"
+                class="org.udelledo.intellij.idea.action.TerminalAction" text="TerminalAction">
+            <add-to-group group-id="ToolsBasicGroup" anchor="first"/>
+        </action>
+    </actions>
 </idea-plugin>

@@ -1,4 +1,3 @@
-import io.gitlab.arturbosch.detekt.Detekt
 import org.jetbrains.changelog.markdownToHTML
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
@@ -13,21 +12,34 @@ plugins {
     id("org.jetbrains.intellij") version "1.0"
     // gradle-changelog-plugin - read more: https://github.com/JetBrains/gradle-changelog-plugin
     id("org.jetbrains.changelog") version "1.1.2"
-    // detekt linter - read more: https://detekt.github.io/detekt/gradle.html
-    id("io.gitlab.arturbosch.detekt") version "1.17.1"
-    // ktlint linter - read more: https://github.com/JLLeitschuh/ktlint-gradle
-    id("org.jlleitschuh.gradle.ktlint") version "10.0.0"
+    id("info.solidsoft.pitest") version "1.5.1"
+
 }
 
 group = properties("pluginGroup")
 version = properties("pluginVersion")
+
+val junit5Version = "5.7.2"
+val mockkIoVersion = "1.12.0"
 
 // Configure project's dependencies
 repositories {
     mavenCentral()
 }
 dependencies {
-    detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.17.1")
+    testImplementation("io.mockk:mockk:$mockkIoVersion")
+    testImplementation("io.mockk:mockk-common:$mockkIoVersion")
+
+    testImplementation("org.junit.jupiter:junit-jupiter-api:$junit5Version")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:$junit5Version")
+    pitest("org.pitest:pitest-junit5-plugin:0.14")
+
+
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junit5Version")
+}
+
+tasks.withType<Test>().configureEach {
+    useJUnitPlatform()
 }
 
 // Configure gradle-intellij-plugin plugin.
@@ -50,31 +62,17 @@ changelog {
     groups = emptyList()
 }
 
-// Configure detekt plugin.
-// Read more: https://detekt.github.io/detekt/kotlindsl.html
-detekt {
-    config = files("./detekt-config.yml")
-    buildUponDefaultConfig = true
-
-    reports {
-        html.enabled = false
-        xml.enabled = false
-        txt.enabled = false
-    }
-}
 
 tasks {
-    // Set the compatibility versions to 1.8
     withType<JavaCompile> {
-        sourceCompatibility = "1.8"
-        targetCompatibility = "1.8"
+        sourceCompatibility = "11"
+        targetCompatibility = "11"
     }
     withType<KotlinCompile> {
-        kotlinOptions.jvmTarget = "1.8"
+        kotlinOptions.jvmTarget = "11"
     }
-
-    withType<Detekt> {
-        jvmTarget = "1.8"
+    withType<Test>().configureEach {
+        useJUnitPlatform()
     }
 
     patchPluginXml {
@@ -103,6 +101,12 @@ tasks {
         ideVersions.set(properties("pluginVerifierIdeVersions").split(',').map(String::trim).filter(String::isNotEmpty))
     }
 
+    pitest {
+        outputFormats.set(setOf("HTML"))
+        useClasspathFile.set(true)
+        testPlugin.set("junit5")
+        junit5PluginVersion.set("0.14")
+    }
     publishPlugin {
         dependsOn("patchChangelog")
         token.set(System.getenv("PUBLISH_TOKEN"))
